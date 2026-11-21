@@ -1,66 +1,53 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { FiCheck } from "react-icons/fi";
-import { read, write, uid, today } from "../utils/helpers";
-import { seedCvs } from "../data/mock";
+import { authApi, tokenStore, setUnauthorizedHandler } from "../services/api";
 
+const USER_KEY = "arb_user";
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
 
 export function AppProvider({ children }) {
-  const [users, setUsers] = useState(() => read("arb_users", []));
-  const [sessionId, setSessionId] = useState(() => read("arb_session", null));
-  const [cvs, setCvs] = useState(() => read("arb_cvs", []));
+  const [user, setUser] = useState(() => {
+    try {
+      return tokenStore.get() ? JSON.parse(localStorage.getItem(USER_KEY)) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [hfToken, setHfToken] = useState(import.meta.env.VITE_HF_TOKEN ?? "");
   const [toast, setToast] = useState(null);
 
-  useEffect(() => write("arb_users", users), [users]);
-  useEffect(() => write("arb_session", sessionId), [sessionId]);
-  useEffect(() => write("arb_cvs", cvs), [cvs]);
+  const clearSession = useCallback(() => {
+    tokenStore.clear();
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+    setHfToken(import.meta.env.VITE_HF_TOKEN ?? "");
+  }, []);
 
-  const user = users.find((u) => u.id === sessionId) || null;
+  useEffect(() => {
+    setUnauthorizedHandler(clearSession);
+  }, [clearSession]);
+
+  const startSession = ({ student, access_token }) => {
+    tokenStore.set(access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify(student));
+    setUser(student);
+  };
+
+  const register = async (body) => startSession(await authApi.register(body));
+  const login = async (body) => startSession(await authApi.login(body));
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+    }
+    clearSession();
+  };
 
   const notify = useCallback((msg) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+    setTimeout(() => setToast(null), 2400);
   }, []);
-
-  const register = ({ name, email, password }) => {
-    if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-      return { error: "هذا البريد الإلكتروني مسجّل مسبقاً" };
-    }
-    const u = { id: uid(), name, email, password };
-    setUsers((p) => [...p, u]);
-    setCvs((p) => [...seedCvs(u.id, name, email), ...p]);
-    setSessionId(u.id);
-    return { ok: true };
-  };
-
-  const login = ({ identifier, password }) => {
-    const id = identifier.trim().toLowerCase();
-    const u = users.find(
-      (x) =>
-        (x.email.toLowerCase() === id || x.name.toLowerCase() === id) &&
-        x.password === password
-    );
-    if (!u) return { error: "بيانات الدخول غير صحيحة" };
-    setSessionId(u.id);
-    return { ok: true };
-  };
-
-  const logout = () => setSessionId(null);
-
-  const addCv = (data) => {
-    const cv = {
-      id: uid(),
-      ownerId: user.id,
-      name: `CV - ${data.jobTitle || data.fullName}`,
-      updatedAt: today(),
-      data,
-    };
-    setCvs((p) => [cv, ...p]);
-    return cv;
-  };
-
-  const deleteCv = (id) => setCvs((p) => p.filter((c) => c.id !== id));
 
   const copy = async (text) => {
     try {
@@ -73,7 +60,7 @@ export function AppProvider({ children }) {
 
   return (
     <Ctx.Provider
-      value={{ user, cvs, register, login, logout, addCv, deleteCv, copy, notify }}
+      value={{ user, hfToken, setHfToken, register, login, logout, notify, copy }}
     >
       {children}
       {toast && (

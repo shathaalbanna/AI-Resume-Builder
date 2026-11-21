@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
-import { initials } from "../utils/helpers";
 import { useApp } from "../context/AppContext";
+import Logo from "./Logo";
 import { btnGhost } from "../styles";
-import Logo from "../components/Logo";
+import { initials } from "../utils/helpers";
 
 export default function Navbar() {
   const { user, logout } = useApp();
@@ -22,8 +22,8 @@ export default function Navbar() {
             {user?.name}
           </span>
           <button
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               navigate("/login");
             }}
             className={btnGhost}

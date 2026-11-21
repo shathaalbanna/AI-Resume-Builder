@@ -1,22 +1,32 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiMail, FiLock, FiAlertCircle } from "react-icons/fi";
+import { FiMail, FiLock, FiAlertCircle, FiLoader } from "react-icons/fi";
 import { useApp } from "../context/AppContext";
-import { btnPrimary } from "../styles";
-import Input from "../components/Input";
 import AuthShell from "../components/AuthShell";
+import Input from "../components/Input";
+import { btnPrimary } from "../styles";
+import { parseError } from "../utils/helpers";
 
 export default function Login() {
   const { login } = useApp();
   const navigate = useNavigate();
-  const [f, setF] = useState({ identifier: "", password: "" });
+  const [f, setF] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const r = login(f);
-    if (r.error) return setError(r.error);
-    navigate("/dashboard");
+    setError("");
+    setLoading(true);
+    try {
+      await login({ email: f.email.trim(), password: f.password });
+      navigate("/dashboard");
+    } catch (err) {
+      const { fields, message } = parseError(err);
+      setError(fields.email || fields.password || message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,10 +45,11 @@ export default function Login() {
       <form onSubmit={submit} className="space-y-4">
         <Input
           icon={FiMail}
-          label="البريد الإلكتروني أو اسم المستخدم"
+          label="البريد الإلكتروني"
+          type="email"
           required
-          value={f.identifier}
-          onChange={(e) => setF({ ...f, identifier: e.target.value })}
+          value={f.email}
+          onChange={(e) => setF({ ...f, email: e.target.value })}
           autoComplete="username"
         />
         <Input
@@ -52,10 +63,11 @@ export default function Login() {
         />
         {error && (
           <p className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2.5 text-sm text-rose-700">
-            <FiAlertCircle /> {error}
+            <FiAlertCircle className="shrink-0" /> {error}
           </p>
         )}
-        <button type="submit" className={`${btnPrimary} w-full`}>
+        <button type="submit" disabled={loading} className={`${btnPrimary} w-full`}>
+          {loading && <FiLoader className="animate-spin" />}
           تسجيل الدخول
         </button>
       </form>

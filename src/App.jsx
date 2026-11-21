@@ -26,7 +26,7 @@ export default function App() {
             <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
             <Route path="/create-cv" element={<Protected><CreateCV /></Protected>} />
-            <Route path="/s/:id" element={<CVPage />} />
+            <Route path="/s/:token" element={<CVPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </AppProvider>

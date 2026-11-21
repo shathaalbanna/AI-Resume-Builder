@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { FiCheck, FiCopy, FiExternalLink, FiLink } from "react-icons/fi";
 import { useApp } from "../context/AppContext";
 import { btnGhost } from "../styles";
+import { fmtDate } from "../utils/helpers";
 
-export default function ShareModal({ link, onClose }) {
+export default function ShareModal({ link, expiresAt, onClose }) {
   const { copy } = useApp();
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -26,10 +28,10 @@ export default function ShareModal({ link, onClose }) {
           <FiCheck size={28} />
         </div>
         <h2 className="mt-4 text-center text-lg font-bold text-slate-900">
-          تم اعتماد سيرتك الذاتية
+          رابط المشاركة جاهز
         </h2>
         <p className="mt-1 text-center text-sm text-slate-500">
-          هذا رابط المشاركة المباشر لسيرتك بحلّتها الجديدة.
+          أي شخص لديه هذا الرابط يستطيع رؤية سيرتك الذاتية.
         </p>
 
         <div className="mt-5 flex items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2">
@@ -49,6 +51,10 @@ export default function ShareModal({ link, onClose }) {
             نسخ الرابط
           </button>
         </div>
+
+        <p className="mt-3 text-center text-xs text-slate-400">
+          {expiresAt ? `ينتهي الرابط في ${fmtDate(expiresAt)}` : "الرابط بدون تاريخ انتهاء"}
+        </p>
 
         <div className="mt-5 grid grid-cols-2 gap-2">
           <a href={link} target="_blank" rel="noreferrer" className={btnGhost}>
