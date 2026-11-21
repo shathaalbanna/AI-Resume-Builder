@@ -1,0 +1,13 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/cv/:path*",
+      "destination": "https://smart-store.devamer.online/cv/:path*"
+    },
+    {
+      "source": "/((?!cv/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

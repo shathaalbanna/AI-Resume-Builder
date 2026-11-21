@@ -1,6 +1,5 @@
 import axios from "axios";
-export const API_URL =
-  import.meta.env.VITE_API_URL ?? "https://smart-store.devamer.online";
+export const API_URL = import.meta.env.VITE_API_URL || "";
 
 const TOKEN_KEY = "arb_token";
 
